@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <meta charset="UTF-8">
 <title>Solar Quote Tool</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -30,7 +31,7 @@ button {
   border: none;
   border-radius: 8px;
 }
-
+<button onclick="downloadPDF()">Download PDF</button>
 .result {
   margin-top: 20px;
   background: white;
@@ -160,6 +161,32 @@ function calculate() {
   `;
 }
 </script>
+<script>
+async function downloadPDF() {
 
+  const { jsPDF } = window.jspdf;
+
+  let doc = new jsPDF();
+
+  let jobRef = document.getElementById("jobRef").value || "Solar Job";
+
+  let content = document.getElementById("output");
+
+  if (!content.innerHTML.trim()) {
+    alert("Generate BOM first");
+    return;
+  }
+
+  // Convert HTML to text (clean format)
+  let text = content.innerText;
+
+  let lines = doc.splitTextToSize(text, 180);
+
+  doc.setFontSize(12);
+  doc.text(lines, 10, 10);
+
+  doc.save(jobRef + ".pdf");
+}
+</script>
 </body>
 </html>
