@@ -6,7 +6,31 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body {
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 15px;
+}
+
+#brandLogo {
+  width: 50px;
+  height: 50px;
+  border-radius: 10px;
+}
+
+.titleBlock h1 {
+  font-size: 18px;
+  margin: 0;
+}
+
+.titleBlock p {
+  font-size: 12px;
+  margin: 0;
+  color: #666;
+}
+body
+  {
   font-family: Arial;
   max-width: 480px;
   margin: auto;
@@ -46,7 +70,13 @@ button {
 </head>
 
 <body>
-
+<div class="header">
+  <img id="brandLogo" src="icon.png" alt="Logo">
+  <div class="titleBlock">
+    <h1>Haymans Electrical Caloundra</h1>
+    <p>Solar Install Calculator</p>
+  </div>
+</div>
 <h2>Solar Quote Tool</h2>
 
 <label>Job Reference</label>
