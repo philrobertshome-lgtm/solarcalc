@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Solar Installer Tool</title>
+<title>Solar Quote Tool</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -15,24 +15,16 @@ body {
 }
 h2 { text-align: center; }
 
-label {
-  font-weight: bold;
-  font-size: 14px;
-}
-
 input, select {
   width: 100%;
   padding: 12px;
-  margin: 6px 0 14px;
+  margin: 6px 0 12px;
   font-size: 16px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
 }
 
 button {
   width: 100%;
   padding: 14px;
-  font-size: 16px;
   background: #2c7be5;
   color: white;
   border: none;
@@ -46,22 +38,28 @@ button {
   border-radius: 10px;
 }
 
-.section { margin-bottom: 15px; }
+.logo {
+  max-width: 120px;
+  margin-bottom: 10px;
+}
 </style>
 </head>
 
 <body>
 
-<h2>Solar BOM Tool</h2>
+<h2>Solar Quote Tool</h2>
+
+<label>Job Reference</label>
+<input id="jobRef" placeholder="e.g. Smith 6.6kW">
+
+<label>Upload Logo</label>
+<input type="file" id="logoInput">
 
 <label>Panels per Row</label>
 <input id="panelsPerRow" type="number" value="4">
 
-<label>Number of Rows (optional)</label>
-<input id="rows" type="number" placeholder="Leave blank to auto-calc">
-
-<label>Total Panels (optional)</label>
-<input id="totalPanels" type="number" placeholder="Alternative input">
+<label>Rows</label>
+<input id="rows" type="number" value="1">
 
 <label>Panel Width (mm)</label>
 <input id="panelWidth" type="number" value="1134">
@@ -81,94 +79,84 @@ button {
   <option value="tile">Tile</option>
 </select>
 
-<label>Rail Length (mm)</label>
-<input id="railLength" type="number" value="4700">
+<label>Foot Spacing</label>
+<select id="spacing">
+  <option value="900">900mm</option>
+  <option value="1200" selected>1200mm</option>
+</select>
 
-<button onclick="calculate()">Calculate</button>
+<label>Rail Length (mm)</label>
+<input id="railLength" value="4700">
+
+<button onclick="calculate()">Generate BOM</button>
 
 <div class="result" id="output"></div>
 
 <script>
 function calculate() {
 
-  let panelsPerRow = parseInt(document.getElementById("panelsPerRow").value);
-  let rowsInput = document.getElementById("rows").value;
-  let totalPanelsInput = document.getElementById("totalPanels").value;
-
-  let width = parseInt(document.getElementById("panelWidth").value);
-  let length = parseInt(document.getElementById("panelLength").value);
+  let panelsPerRow = +document.getElementById("panelsPerRow").value;
+  let rows = +document.getElementById("rows").value;
+  let width = +document.getElementById("panelWidth").value;
+  let length = +document.getElementById("panelLength").value;
   let orientation = document.getElementById("orientation").value;
   let roofType = document.getElementById("roofType").value;
-  let railLength = parseInt(document.getElementById("railLength").value);
+  let spacing = +document.getElementById("spacing").value;
+  let railLength = +document.getElementById("railLength").value;
+  let jobRef = document.getElementById("jobRef").value;
 
-  // DETERMINE PANEL SPAN
   let panelSpan = (orientation === "portrait") ? width : length;
-
-  // DETERMINE ROWS / TOTAL PANELS
-  let rows, totalPanels;
-
-  if (rowsInput) {
-    rows = parseInt(rowsInput);
-    totalPanels = panelsPerRow * rows;
-  } else if (totalPanelsInput) {
-    totalPanels = parseInt(totalPanelsInput);
-    rows = Math.ceil(totalPanels / panelsPerRow);
-  } else {
-    alert("Enter either rows OR total panels");
-    return;
-  }
+  let totalPanels = panelsPerRow * rows;
 
   // CLAMPS
-  let interPerRow = (panelsPerRow - 1) * 2;
-  let endPerRow = 4;
-  let totalInter = interPerRow * rows;
-  let totalEnd = endPerRow * rows;
-  let totalClamps = totalInter + totalEnd;
+  let midClamps = (panelsPerRow - 1) * 2 * rows;
+  let endClamps = 4 * rows;
 
   // RAILS
   let rowLength = panelsPerRow * panelSpan;
   let railsPerLine = Math.ceil(rowLength / railLength);
-  let railsPerRow = railsPerLine * 2;
-  let totalRails = railsPerRow * rows;
+  let rails = railsPerLine * 2 * rows;
 
   // SPLICES
-  let splicesPerRow = (railsPerLine - 1) * 2;
-  let totalSplices = splicesPerRow * rows;
+  let splices = (railsPerLine - 1) * 2 * rows;
 
-  // ROOF SPACING
-  let spacing = (roofType === "tile") ? 900 : 1200;
+  // FEET
   let feetPerRail = Math.ceil(railLength / spacing) + 1;
-  let totalFeet = feetPerRail * totalRails;
+  let feet = feetPerRail * rails;
+
+  // GROUND LUGS (1 per rail line pair)
+  let groundingLugs = railsPerLine * rows;
+
+  // PART NUMBERS
+  let railPN = "CLNER-R-ELT/4700";
+  let midPN = "CLNC-U/30/46-G";
+  let endPN = "CLNER-EC-ST30";
+  let tinPN = "CLNER-I-05";
+  let tilePN = "CLNER-I-01";
+  let lugPN = "CLNEZ-GL-AT";
+  let splicePN = "CLNER-SP-ELT";
+
+  let fixingPN = (roofType === "tile") ? tilePN : tinPN;
+
+  // LOGO
+  let logoFile = document.getElementById("logoInput").files[0];
+  let logoURL = logoFile ? URL.createObjectURL(logoFile) : "";
 
   document.getElementById("output").innerHTML = `
-    <div class="section">
-      <b>Layout</b><br>
-      Rows: ${rows}<br>
-      Total panels: ${totalPanels}
-    </div>
+    ${logoURL ? `<img src="${logoURL}" class="logo">` : ""}
+    <b>${jobRef}</b><br><br>
 
-    <div class="section">
-      <b>Clamps</b><br>
-      Inter: ${totalInter}<br>
-      End: ${totalEnd}<br>
-      <b>Total: ${totalClamps}</b>
-    </div>
+    <b>System:</b><br>
+    Panels: ${totalPanels}<br>
+    Layout: ${panelsPerRow} x ${rows}<br><br>
 
-    <div class="section">
-      <b>Rails</b><br>
-      Rails per row: ${railsPerRow}<br>
-      <b>Total rails: ${totalRails}</b>
-    </div>
-
-    <div class="section">
-      <b>Splices</b><br>
-      Total joins: ${totalSplices}
-    </div>
-
-    <div class="section">
-      <b>Roof Fixings (${roofType})</b><br>
-      Total feet: ${totalFeet}
-    </div>
+    <b>BOM:</b><br>
+    Rails (4700) — ${rails} (${railPN})<br>
+    Mid Clamps — ${midClamps} (${midPN})<br>
+    End Clamps — ${endClamps} (${endPN})<br>
+    Splices — ${splices} (${splicePN})<br>
+    Roof Fixings — ${feet} (${fixingPN})<br>
+    Ground Lugs — ${groundingLugs} (${lugPN})
   `;
 }
 </script>
