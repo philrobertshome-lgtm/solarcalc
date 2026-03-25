@@ -131,6 +131,7 @@ button {
 <input id="railLength" value="4700">
 
 <button onclick="calculate()">Generate BOM</button>
+
 <button onclick="downloadPDF()">Download PDF</button>
 </div>
 <div class="result" id="output"></div>
@@ -240,7 +241,7 @@ function buildPDF(doc, jobRef, totalPanels, output) {
 
   // Title
   doc.setFontSize(18);
-  doc.text("Solar Installation Quote", 10, 30);
+  doc.text("Solar Installation Material List", 10, 30);
 
   // Job reference
   doc.setFontSize(11);
