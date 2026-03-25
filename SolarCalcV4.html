@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Solar Installer Tool</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  font-family: Arial;
+  max-width: 480px;
+  margin: auto;
+  padding: 15px;
+  background: #f4f6f8;
+}
+h2 { text-align: center; }
+
+label {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+input, select {
+  width: 100%;
+  padding: 12px;
+  margin: 6px 0 14px;
+  font-size: 16px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  font-size: 16px;
+  background: #2c7be5;
+  color: white;
+  border: none;
+  border-radius: 8px;
+}
+
+.result {
+  margin-top: 20px;
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+}
+
+.section { margin-bottom: 15px; }
+</style>
+</head>
+
+<body>
+
+<h2>Solar BOM Tool</h2>
+
+<label>Panels per Row</label>
+<input id="panelsPerRow" type="number" value="4">
+
+<label>Number of Rows (optional)</label>
+<input id="rows" type="number" placeholder="Leave blank to auto-calc">
+
+<label>Total Panels (optional)</label>
+<input id="totalPanels" type="number" placeholder="Alternative input">
+
+<label>Panel Width (mm)</label>
+<input id="panelWidth" type="number" value="1134">
+
+<label>Panel Length (mm)</label>
+<input id="panelLength" type="number" value="1762">
+
+<label>Orientation</label>
+<select id="orientation">
+  <option value="portrait">Portrait</option>
+  <option value="landscape">Landscape</option>
+</select>
+
+<label>Roof Type</label>
+<select id="roofType">
+  <option value="metal">Metal</option>
+  <option value="tile">Tile</option>
+</select>
+
+<label>Rail Length (mm)</label>
+<input id="railLength" type="number" value="4700">
+
+<button onclick="calculate()">Calculate</button>
+
+<div class="result" id="output"></div>
+
+<script>
+function calculate() {
+
+  let panelsPerRow = parseInt(document.getElementById("panelsPerRow").value);
+  let rowsInput = document.getElementById("rows").value;
+  let totalPanelsInput = document.getElementById("totalPanels").value;
+
+  let width = parseInt(document.getElementById("panelWidth").value);
+  let length = parseInt(document.getElementById("panelLength").value);
+  let orientation = document.getElementById("orientation").value;
+  let roofType = document.getElementById("roofType").value;
+  let railLength = parseInt(document.getElementById("railLength").value);
+
+  // DETERMINE PANEL SPAN
+  let panelSpan = (orientation === "portrait") ? width : length;
+
+  // DETERMINE ROWS / TOTAL PANELS
+  let rows, totalPanels;
+
+  if (rowsInput) {
+    rows = parseInt(rowsInput);
+    totalPanels = panelsPerRow * rows;
+  } else if (totalPanelsInput) {
+    totalPanels = parseInt(totalPanelsInput);
+    rows = Math.ceil(totalPanels / panelsPerRow);
+  } else {
+    alert("Enter either rows OR total panels");
+    return;
+  }
+
+  // CLAMPS
+  let interPerRow = (panelsPerRow - 1) * 2;
+  let endPerRow = 4;
+  let totalInter = interPerRow * rows;
+  let totalEnd = endPerRow * rows;
+  let totalClamps = totalInter + totalEnd;
+
+  // RAILS
+  let rowLength = panelsPerRow * panelSpan;
+  let railsPerLine = Math.ceil(rowLength / railLength);
+  let railsPerRow = railsPerLine * 2;
+  let totalRails = railsPerRow * rows;
+
+  // SPLICES
+  let splicesPerRow = (railsPerLine - 1) * 2;
+  let totalSplices = splicesPerRow * rows;
+
+  // ROOF SPACING
+  let spacing = (roofType === "tile") ? 900 : 1200;
+  let feetPerRail = Math.ceil(railLength / spacing) + 1;
+  let totalFeet = feetPerRail * totalRails;
+
+  document.getElementById("output").innerHTML = `
+    <div class="section">
+      <b>Layout</b><br>
+      Rows: ${rows}<br>
+      Total panels: ${totalPanels}
+    </div>
+
+    <div class="section">
+      <b>Clamps</b><br>
+      Inter: ${totalInter}<br>
+      End: ${totalEnd}<br>
+      <b>Total: ${totalClamps}</b>
+    </div>
+
+    <div class="section">
+      <b>Rails</b><br>
+      Rails per row: ${railsPerRow}<br>
+      <b>Total rails: ${totalRails}</b>
+    </div>
+
+    <div class="section">
+      <b>Splices</b><br>
+      Total joins: ${totalSplices}
+    </div>
+
+    <div class="section">
+      <b>Roof Fixings (${roofType})</b><br>
+      Total feet: ${totalFeet}
+    </div>
+  `;
+}
+</script>
+
+</body>
+</html>
